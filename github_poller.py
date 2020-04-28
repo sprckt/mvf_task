@@ -6,6 +6,7 @@ import argparse
 from dotenv import load_dotenv
 import sys
 from pprint import pprint
+from data_parser import ResponseParser
 
 load_dotenv()
 
@@ -40,12 +41,25 @@ def main():
         print(f'Please specify user you would like to search for using -user')
         sys.exit(1)
 
-    test_url = API
     response = session.get(API)
     response.raise_for_status()
+    print(f'API check: {response.status_code}')
 
-    print(f'Fetching repos for github user: {user}')
-    pprint(response.json(), indent=2)
+    user_repos_url = f"{API}/users/{user}/repos?page=100&per_page=20"
+    repos_response = session.get(user_repos_url)
+    repos_response.raise_for_status()
+    print(f'Fetching repos for github user: {user}, {repos_response.status_code, repos_response.text}')
+
+    repos_response = repos_response.json()
+
+    pprint(repos_response, indent=2)
+
+    if repos_response:
+        useful_keys = ['full_name', 'archived', 'id', 'url', 'updated_at', 'language']
+        useful_data = ResponseParser(response=repos_response, metadata_keys=['language'])
+        useful_data.grab_useful_data()
+
+        print(useful_data.most_popular_attribute_value('language'))
 
 
 if __name__ == '__main__':
