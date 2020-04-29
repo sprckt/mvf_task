@@ -25,7 +25,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
 
-    # Add optional (use nargs = ?, otherwise it will be necessary) argument in command line
+    # Github username
     parser.add_argument('-user', nargs='?',
                         help='Github username you would like to search for',
                         default=None)
@@ -41,25 +41,29 @@ def main():
         print(f'Please specify user you would like to search for using -user')
         sys.exit(1)
 
-    response = session.get(API)
-    response.raise_for_status()
-    print(f'API check: {response.status_code}')
+    all_repos = []
+    repos_response = True
+    page_num = 1
+    while repos_response:
+        user_repos_url = f"{API}/users/{user}/repos?page={page_num}&per_page=50"
+        repos_response = session.get(user_repos_url)
+        repos_response.raise_for_status()
 
-    user_repos_url = f"{API}/users/{user}/repos?page=100&per_page=20"
-    repos_response = session.get(user_repos_url)
-    repos_response.raise_for_status()
-    print(f'Fetching repos for github user: {user}, {repos_response.status_code, repos_response.text}')
+        repos_response = repos_response.json()
+        print(f'Fetched repos for github user {user}, page {page_num}: {len(repos_response)}')
 
-    repos_response = repos_response.json()
+        # pprint(repos_response, indent=2)
+        if repos_response:
+            all_repos.extend(repos_response)
+        page_num += 1
 
-    pprint(repos_response, indent=2)
-
-    if repos_response:
-        useful_keys = ['full_name', 'archived', 'id', 'url', 'updated_at', 'language']
-        useful_data = ResponseParser(response=repos_response, metadata_keys=['language'])
-        useful_data.grab_useful_data()
-
-        print(useful_data.most_popular_attribute_value('language'))
+    response_lengths = set(len(repo) for repo in all_repos)
+    print(f'Repo sizes: {response_lengths}')
+    useful_keys = ['full_name', 'language', 'url', 'watchers']
+    parsed_data = ResponseParser(response=all_repos, response_attrs=useful_keys)
+    parsed_data.parse_useful_data()
+    popular = parsed_data.most_popular_attribute_value('language')
+    print(f'For user {user}, popular languages are: {popular}')
 
 
 if __name__ == '__main__':
