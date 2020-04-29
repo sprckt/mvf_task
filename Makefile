@@ -1,11 +1,11 @@
 SHELL:=/bin/bash
 DOCKER_STACK_NAME:=mvf
-GIT_USER:=sprckt
+GIT_USER:=
 
 build:  ## build image for deployment
 	docker build -t ${DOCKER_STACK_NAME} -f Dockerfile .
 
-run: ## run a shell on image, specify GIT_USER variable when calling this
+run: ## runs container, use like this make GIT_USER=xxxx run
 	docker run -it --rm --name ${DOCKER_STACK_NAME}_run \
 	--env-file .env \
 	-t ${DOCKER_STACK_NAME}:latest \

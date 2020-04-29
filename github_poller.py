@@ -8,12 +8,12 @@ import sys
 from pprint import pprint
 from data_parser import ResponseParser
 
+# Environment and config vars
 load_dotenv()
-
 API = 'https://api.github.com'
 GIT_USER = os.getenv('GIT_USER')
 GIT_PASSWORD = os.getenv('GIT_PASSWORD')
-print(GIT_USER, GIT_PASSWORD)
+
 session = requests.Session()
 session.auth = (GIT_USER, GIT_PASSWORD)
 
@@ -38,7 +38,7 @@ def main():
     args = parse_args()
     user = args.user
     if not user:
-        print(f'Please specify user you would like to search for using -user')
+        print(f'Specify github username using -user argument')
         sys.exit(1)
 
     all_repos = []
@@ -52,14 +52,14 @@ def main():
         repos_response = repos_response.json()
         print(f'Fetched repos for github user {user}, page {page_num}: {len(repos_response)}')
 
-        # pprint(repos_response, indent=2)
         if repos_response:
             all_repos.extend(repos_response)
         page_num += 1
 
-    response_lengths = set(len(repo) for repo in all_repos)
-    print(f'Repo sizes: {response_lengths}')
+    # The response attributes to parsed out
     useful_keys = ['full_name', 'language', 'url', 'watchers']
+
+    # Parse all response data to ResponseParser to work out most popular language.
     parsed_data = ResponseParser(response=all_repos, response_attrs=useful_keys)
     parsed_data.parse_useful_data()
     popular = parsed_data.most_popular_attribute_value('language')
