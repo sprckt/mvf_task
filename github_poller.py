@@ -1,11 +1,9 @@
 #! /usr/bin/env python3
 import os
 import requests
-import asyncio
 import argparse
 from dotenv import load_dotenv
 import sys
-from pprint import pprint
 from data_parser import ResponseParser
 
 # Environment and config vars
@@ -46,8 +44,13 @@ def main():
     page_num = 1
     while repos_response:
         user_repos_url = f"{API}/users/{user}/repos?page={page_num}&per_page=50"
-        repos_response = session.get(user_repos_url)
-        repos_response.raise_for_status()
+        try:
+            repos_response = session.get(user_repos_url)
+            repos_response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f'Check API is available and user name is correct: {e}')
+            sys.exit(1)
+
 
         repos_response = repos_response.json()
         print(f'Fetched repos for github user {user}, page {page_num}: {len(repos_response)}')
