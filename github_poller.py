@@ -33,6 +33,7 @@ def parse_args():
 
 def main():
 
+    # Grab command line args
     args = parse_args()
     user = args.user
     if not user:
@@ -43,6 +44,8 @@ def main():
     repos_response = True
     page_num = 1
     while repos_response:
+
+        # Generate URL and poll API
         user_repos_url = f"{API}/users/{user}/repos?page={page_num}&per_page=50"
         try:
             repos_response = session.get(user_repos_url)
@@ -51,10 +54,11 @@ def main():
             print(f'Check API is available and user name is correct: {e}')
             sys.exit(1)
 
-
+        # Convert to JSON
         repos_response = repos_response.json()
         print(f'Fetched repos for github user {user}, page {page_num}: {len(repos_response)}')
 
+        # Add only if populated response comes back
         if repos_response:
             all_repos.extend(repos_response)
         page_num += 1
@@ -66,6 +70,8 @@ def main():
     parsed_data = ResponseParser(response=all_repos, response_attrs=useful_keys)
     parsed_data.parse_useful_data()
     popular = parsed_data.most_popular_attribute_value('language')
+
+    # Output from analysis
     print(f'For user {user}, popular languages are: {popular}')
 
 
